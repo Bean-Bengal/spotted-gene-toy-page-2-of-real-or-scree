@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Spotted Gene Toy</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#f4ecd8;color:#2b2118;font-family:system-ui,sans-serif}
+.wrap{max-width:560px;margin:0 auto;padding:16px}
+h1{font-size:1.5rem;margin:.2em 0}
+#banner{padding:10px;border-radius:8px;font-weight:bold;margin:10px 0;overflow-wrap:anywhere}
+.pass{background:#cfe8c4}.fail{background:#f3b8b0}
+.row{display:grid;grid-template-columns:1fr;gap:10px;margin:12px 0}
+@media(min-width:480px){.row{grid-template-columns:1fr 1fr}}
+.row>*{min-width:0}
+label{display:block;font-size:.9rem;margin-bottom:4px}
+select,button{width:100%;min-height:44px;font-size:1rem;border-radius:8px;border:2px solid #2b2118;background:#fff;padding:6px}
+button:active{background:#e0c48a}
+#out{background:#fff;border:2px solid #2b2118;border-radius:8px;padding:12px;overflow-wrap:anywhere}
+.kit{display:inline-block;width:48px;height:48px;border-radius:50%;margin:4px;border:2px solid #2b2118;text-align:center;line-height:44px;font-size:.8rem}
+a{color:#7a3b00}
+</style></head><body><div class="wrap">
+<h1>Spotted gene toy</h1>
+<p>Pick two parents. Each carries Spotted (S, dominant) or plain (s). See what kittens are possible.</p>
+<div id="banner" role="status">Checking…</div>
+<div class="row">
+<div><label for="pa">Parent A</label><select id="pa"><option>SS</option><option selected>Ss</option><option>ss</option></select></div>
+<div><label for="pb">Parent B</label><select id="pb"><option>SS</option><option>Ss</option><option selected>ss</option></select></div>
+</div>
+<button id="go" type="button">Cross them</button>
+<div id="out" aria-live="polite" style="margin-top:12px">Press the button.</div>
+<p><a href="index.html">Back to Real or Screenshot?</a></p>
+</div>
+<script>
+// pure rule: returns counts of genotypes SS, Ss, ss out of 4 boxes
+function cross(a,b){
+  const r={SS:0,Ss:0,ss:0};
+  for(const x of a)for(const y of b){
+    const g=[x,y].sort().join('');
+    const k=g==='SS'?'SS':(g==='Ss'||g==='sS')?'Ss':'ss';
+    r[k]++;
+  }
+  return r;
+}
+// deliberately broken copy: counts Ss as ss
+function crossBroken(a,b){const r=cross(a,b);r.ss+=r.Ss;r.Ss=0;return r}
+function same(r,s,h,p){return r.SS===s&&r.Ss===h&&r.ss===p}
+function checks(fn){
+  return same(fn('SS','SS'),4,0,0)&&same(fn('Ss','Ss'),1,2,1)&&same(fn('Ss','ss'),0,2,2)&&
+    same(fn('ss','ss'),0,0,4)&&same(fn('SS','ss'),0,4,0)&&same(fn('SS','Ss'),2,2,0);
+}
+const banner=document.getElementById('banner');
+const realOk=checks(cross), brokenFails=!checks(crossBroken);
+if(realOk&&brokenFails){banner.textContent='Self-test: pass (real copy passes, broken copy fails as it should)';banner.className='pass'}
+else{banner.textContent='Self-test FAIL: '+(realOk?'checker cannot catch the broken copy':'the cross is wrong');banner.className='fail'}
+const goBtn=document.getElementById('go'),paEl=document.getElementById('pa'),pbEl=document.getElementById('pb'),outEl=document.getElementById('out');
+goBtn.addEventListener('click',function(){
+  const r=cross(paEl.value,pbEl.value);
+  const spotted=(r.SS+r.Ss)*25, plain=r.ss*25;
+  let dots='';
+  const list=[['SS',r.SS],['Ss',r.Ss],['ss',r.ss]];
+  for(const [g,n] of list)for(let i=0;i<n;i++)dots+='<span class="kit" style="background:'+(g==='ss'?'#e8d9a8':'#d9a441')+'">'+g+'</span>';
+  outEl.innerHTML=dots+'<br>'+spotted+'% spotted, '+plain+'% plain.';
+});
+</script></body></html>
